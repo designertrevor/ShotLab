@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Caddy</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #000;
+  --surface: #1a1a1a;
+  --surface2: #262626;
+  --border: rgba(255,255,255,0.12);
+  --text: #ffffff;
+  --text2: #999999;
+  --text3: #555555;
+  --radius: 16px;
+  --radius-sm: 12px;
+}
+
+html, body {
+  height: 100%;
+  background: #000;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  overflow: hidden;
+}
+
+.app {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+}
+
+.screen {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+.screen.active { display: flex; }
+
+.scroll-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.scroll-content::-webkit-scrollbar { display: none; }
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  flex-shrink: 0;
+}
+.nav-title { font-size: 17px; font-weight: 600; }
+.nav-back {
+  font-size: 17px; color: var(--text);
+  background: none; border: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.nav-action {
+  font-size: 17px; color: var(--text);
+  background: none; border: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.bottom-bar {
+  padding: 16px 24px calc(32px + env(safe-area-inset-bottom, 0px));
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  background: #000;
+}
+
+.btn-primary {
+  width: 100%; height: 60px;
+  background: var(--text); color: #000;
+  border: none; border-radius: 100px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 17px; font-weight: 600;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.btn-primary:active { opacity: 0.8; }
+
+.btn-ghost {
+  width: 100%; height: 52px;
+  background: none; border: none;
+  color: var(--text2); font-size: 15px;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer; margin-top: 4px;
+}
+
+.divider { height: 1px; background: var(--border); }
+
+/* ===================== HOME ===================== */
+.home-hero { padding: 12px 24px 32px; }
+.home-eyebrow { font-size: 15px; color: var(--text3); margin-bottom: 8px; }
+.home-hcp-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 96px; line-height: 1;
+}
+
+.stat-strip { display: flex; padding: 28px 24px; }
+.stat-strip-item { flex: 1; text-align: center; }
+.stat-strip-item + .stat-strip-item { border-left: 1px solid var(--border); }
+.stat-strip-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 44px; line-height: 1;
+}
+.stat-strip-lbl {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text3); margin-top: 4px;
+}
+
+.rounds-section { padding: 24px 24px 0; }
+.rounds-header {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 20px;
+}
+.rounds-title { font-size: 22px; font-weight: 600; }
+.rounds-link {
+  font-size: 15px; color: var(--text2);
+  background: none; border: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.round-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.round-row:active { opacity: 0.6; }
+.round-row:last-child { border-bottom: none; }
+.round-course { font-size: 17px; font-weight: 500; }
+.round-meta { font-size: 14px; color: var(--text3); margin-top: 3px; }
+.round-right { text-align: right; }
+.round-score {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 44px; line-height: 1;
+}
+.round-to-par { font-size: 13px; color: var(--text3); }
+
+/* ===================== SETUP ===================== */
+.section-block { padding: 24px 24px 0; }
+.section-block-title {
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 14px;
+}
+
+.course-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.course-row:active { opacity: 0.6; }
+.course-row:last-child { border-bottom: none; }
+.course-name { font-size: 17px; font-weight: 500; }
+.course-meta { font-size: 14px; color: var(--text3); margin-top: 3px; }
+.course-check {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: transparent; flex-shrink: 0;
+}
+.course-check.on { background: var(--text); border-color: var(--text); color: #000; }
+
+.seg-control {
+  display: flex; background: var(--surface);
+  border-radius: 10px; padding: 3px;
+}
+.seg-btn {
+  flex: 1; height: 36px; border: none;
+  background: none; color: var(--text2);
+  font-size: 14px; font-weight: 500;
+  border-radius: 8px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.seg-btn.on { background: var(--surface2); color: var(--text); }
+
+/* ===================== HOLE ===================== */
+.hole-top { padding: 12px 24px 16px; flex-shrink: 0; }
+.hole-top-row {
+  display: flex; align-items: flex-start;
+  justify-content: space-between;
+}
+.hole-num-lbl {
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 2px;
+}
+.hole-num-big {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 96px; line-height: 1;
+}
+.hole-right { text-align: right; padding-top: 8px; }
+.hole-par-lbl { font-size: 13px; color: var(--text3); }
+.hole-par-big {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 48px; line-height: 1; color: var(--text2);
+}
+.hole-yds { font-size: 15px; color: var(--text3); margin-top: 4px; }
+.hole-running { font-size: 15px; color: var(--text3); margin-top: 16px; }
+.hole-running strong { color: var(--text); font-weight: 600; }
+
+.progress-bar {
+  display: flex; gap: 4px;
+  padding: 0 24px 20px; flex-shrink: 0;
+}
+.pip {
+  flex: 1; height: 3px; border-radius: 2px;
+  background: var(--surface2);
+}
+.pip.done { background: var(--text3); }
+.pip.now { background: var(--text); }
+
+.score-section { padding: 0 24px; flex-shrink: 0; }
+.section-lbl {
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 14px;
+}
+.score-row { display: flex; gap: 8px; align-items: stretch; }
+.score-btn {
+  flex: 1; min-height: 72px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 2px; transition: all 0.12s;
+  font-family: 'DM Sans', sans-serif;
+}
+.score-btn:active { transform: scale(0.94); }
+.score-btn.center {
+  flex: 1.5; min-height: 88px;
+  border-color: rgba(255,255,255,0.3);
+}
+.score-btn.on { background: var(--text); border-color: var(--text); }
+.score-btn .num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 40px; line-height: 1; color: var(--text2);
+}
+.score-btn.center .num { font-size: 52px; color: var(--text); }
+.score-btn.on .num { color: #000; }
+.score-btn .name {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.8px; text-transform: uppercase;
+  color: var(--text3);
+}
+.score-btn.on .name { color: rgba(0,0,0,0.5); }
+
+.putts-section { padding: 28px 24px 0; flex-shrink: 0; }
+.putts-row { display: flex; gap: 10px; }
+.putt-btn {
+  flex: 1; height: 72px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text2);
+  font-family: 'Bebas Neue', sans-serif; font-size: 40px;
+  cursor: pointer; transition: all 0.12s;
+  display: flex; align-items: center; justify-content: center;
+}
+.putt-btn:active { transform: scale(0.94); }
+.putt-btn.on { background: var(--text); border-color: var(--text); color: #000; }
+.putt-sm {
+  font-size: 13px; font-family: 'DM Sans', sans-serif;
+  font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+}
+
+.details-section { padding: 28px 24px 0; }
+.details-header {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 16px;
+}
+.details-lbl {
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--text3);
+}
+.details-opt { font-size: 13px; color: var(--text3); }
+
+.shot-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px; margin-bottom: 12px;
+}
+.shot-hd {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 18px;
+}
+.shot-title { font-size: 17px; font-weight: 600; }
+.dist-wrap { display: flex; align-items: center; gap: 6px; }
+.dist-input {
+  width: 72px; height: 36px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text);
+  font-size: 15px; font-family: 'DM Mono', monospace;
+  text-align: center;
+}
+.dist-input::placeholder { color: var(--text3); }
+.dist-input:focus { outline: none; border-color: rgba(255,255,255,0.4); }
+.dist-unit { font-size: 13px; color: var(--text3); }
+
+.row-lbl {
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.8px; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 10px;
+}
+.club-scroll {
+  display: flex; gap: 8px;
+  overflow-x: auto; padding-bottom: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+.club-scroll::-webkit-scrollbar { display: none; }
+.pill {
+  height: 40px; min-width: 48px; padding: 0 14px;
+  border-radius: 100px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text2);
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.12s; font-family: 'DM Sans', sans-serif;
+}
+.pill:active { transform: scale(0.92); }
+.pill.on { background: var(--text); border-color: var(--text); color: #000; }
+
+.miss-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.miss-pill {
+  height: 40px; padding: 0 16px;
+  border-radius: 100px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text2);
+  font-size: 14px; cursor: pointer; white-space: nowrap;
+  display: flex; align-items: center;
+  transition: all 0.12s; font-family: 'DM Sans', sans-serif;
+}
+.miss-pill:active { transform: scale(0.92); }
+.miss-pill.on { background: var(--text); border-color: var(--text); color: #000; }
+
+.putt-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px; margin-bottom: 12px;
+}
+.putt-card-title { font-size: 17px; font-weight: 600; margin-bottom: 18px; }
+.putt-dist-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.putt-dist-btn {
+  flex: 1; height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 8px; background: var(--surface2);
+  color: var(--text2); font-size: 13px; font-weight: 500;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: all 0.12s;
+}
+.putt-dist-btn.on { background: var(--text); border-color: var(--text); color: #000; }
+
+/* ===================== ANALYSIS ===================== */
+.analysis-hero {
+  padding: 12px 24px 24px; flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+.analysis-eyebrow { font-size: 13px; color: var(--text3); margin-bottom: 8px; }
+.analysis-score-row {
+  display: flex; align-items: baseline;
+  gap: 16px; margin-bottom: 4px;
+}
+.analysis-score {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 96px; line-height: 1;
+}
+.analysis-to-par {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 44px; color: var(--text2); line-height: 1;
+}
+
+.analysis-strip {
+  display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.astat { flex: 1; text-align: center; padding: 24px 0; }
+.astat + .astat { border-left: 1px solid var(--border); }
+.astat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 44px; line-height: 1;
+}
+.astat-lbl {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text3); margin-top: 4px;
+}
+
+.ai-section { padding: 28px 24px 0; }
+.ai-eyebrow {
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 14px;
+}
+.ai-card {
+  background: var(--surface);
+  border-radius: var(--radius); padding: 24px;
+}
+.ai-text {
+  font-size: 16px; line-height: 1.65;
+  color: var(--text); font-weight: 300;
+}
+.ai-text strong { font-weight: 600; }
+
+.insight-section { padding: 28px 24px 0; }
+.insight-section-title { font-size: 22px; font-weight: 600; margin-bottom: 20px; }
+.insight-row {
+  display: flex; gap: 16px;
+  padding: 20px 0; border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+}
+.insight-row:last-child { border-bottom: none; }
+.insight-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.insight-title { font-size: 17px; font-weight: 500; margin-bottom: 4px; }
+.insight-desc { font-size: 14px; color: var(--text3); line-height: 1.5; }
+
+.sc-section { padding: 28px 24px 0; }
+.sc-title { font-size: 22px; font-weight: 600; margin-bottom: 20px; }
+.sc-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.sc-wrap::-webkit-scrollbar { display: none; }
+table.sc { width: 100%; border-collapse: collapse; font-family: 'DM Mono', monospace; font-size: 13px; }
+table.sc th {
+  font-family: 'DM Sans', sans-serif; font-size: 10px;
+  font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+  color: var(--text3); padding: 0 0 10px; text-align: center;
+}
+table.sc th:first-child { text-align: left; }
+table.sc td {
+  padding: 12px 0; text-align: center;
+  border-top: 1px solid var(--border); font-size: 15px;
+}
+table.sc td:first-child { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--text3); text-align: left; }
+table.sc td.tot { font-weight: 700; }
+table.sc td.birdie { color: var(--text); }
+table.sc td.par { color: var(--text2); }
+table.sc td.bogey { color: var(--text2); }
+table.sc td.dbl { color: var(--text3); }
+
+/* ===================== DESKTOP ===================== */
+@media (min-width: 768px) {
+  body { overflow: auto; }
+  html, body { height: auto; }
+  .app {
+    max-width: 100%; height: auto; overflow: visible;
+    flex-direction: row; min-height: 100vh;
+  }
+  .screen {
+    position: static; display: none;
+    flex-direction: row; height: auto; width: 100%; background: #000;
+  }
+  .screen.active { display: flex; }
+  .mobile-col {
+    width: 390px; flex-shrink: 0; height: 100vh;
+    position: sticky; top: 0; display: flex;
+    flex-direction: column; border-right: 1px solid var(--border);
+    background: #000; overflow: hidden;
+  }
+  .mobile-col .scroll-content { flex: 1; overflow-y: auto; }
+  .mobile-col .bottom-bar { padding: 16px 24px 28px; }
+  .desktop-col {
+    flex: 1; padding: 48px; overflow-y: auto;
+    background: var(--surface);
+  }
+  .desktop-col::-webkit-scrollbar { width: 6px; }
+  .desktop-col::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+  .d-title { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .d-sub { font-size: 15px; color: var(--text3); margin-bottom: 40px; }
+  .d-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .d-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .d-card { background: var(--surface2); border-radius: var(--radius); padding: 28px; }
+  .d-lbl { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); margin-bottom: 16px; }
+  .d-num { font-family: 'Bebas Neue', sans-serif; font-size: 64px; line-height: 1; }
+  .d-sub2 { font-size: 14px; color: var(--text3); margin-top: 4px; }
+  .d-chart { height: 180px; position: relative; }
+  .d-stat-row {
+    display: flex; justify-content: space-between;
+    align-items: center; padding: 14px 0;
+    border-bottom: 1px solid var(--border); font-size: 15px;
+  }
+  .d-stat-row:last-child { border-bottom: none; }
+  .d-stat-lbl { color: var(--text2); }
+}
+.desktop-col { display: none; }
+@media (min-width: 768px) { .desktop-col { display: block; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="mobile-col" style="width:100%;max-width:430px;">
+    <div class="nav">
+      <span class="nav-title">Caddy</span>
+      <button class="nav-action" onclick="goTo('screen-setup')">New Round</button>
+    </div>
+    <div class="scroll-content">
+      <div class="home-hero">
+        <div class="home-eyebrow">Handicap Index</div>
+        <div class="home-hcp-num">8.2</div>
+      </div>
+      <div class="divider"></div>
+      <div class="stat-strip">
+        <div class="stat-strip-item">
+          <div class="stat-strip-num">82</div>
+          <div class="stat-strip-lbl">Avg Score</div>
+        </div>
+        <div class="stat-strip-item">
+          <div class="stat-strip-num">47%</div>
+          <div class="stat-strip-lbl">Fairways</div>
+        </div>
+        <div class="stat-strip-item">
+          <div class="stat-strip-num">32</div>
+          <div class="stat-strip-lbl">Avg Putts</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="rounds-section">
+        <div class="rounds-header">
+          <div class="rounds-title">Recent Rounds</div>
+          <button class="rounds-link">See All</button>
+        </div>
+        <div class="round-row" onclick="goTo('screen-analysis')">
+          <div>
+            <div class="round-course">Birch Creek</div>
+            <div class="round-meta">Apr 2, 2026 · 18 holes</div>
+          </div>
+          <div class="round-right">
+            <div class="round-score">81</div>
+            <div class="round-to-par">+9</div>
+          </div>
+        </div>
+        <div class="round-row" onclick="goTo('screen-analysis')">
+          <div>
+            <div class="round-course">Logan River</div>
+            <div class="round-meta">Mar 28, 2026 · 18 holes</div>
+          </div>
+          <div class="round-right">
+            <div class="round-score">84</div>
+            <div class="round-to-par">+13</div>
+          </div>
+        </div>
+        <div class="round-row" onclick="goTo('screen-analysis')">
+          <div>
+            <div class="round-course">Preston G&CC</div>
+            <div class="round-meta">Mar 21, 2026 · 18 holes</div>
+          </div>
+          <div class="round-right">
+            <div class="round-score">78</div>
+            <div class="round-to-par">+7</div>
+          </div>
+        </div>
+      </div>
+      <div style="height:40px;"></div>
+    </div>
+    <div class="bottom-bar">
+      <button class="btn-primary" onclick="goTo('screen-setup')">Start New Round</button>
+    </div>
+  </div>
+  <div class="desktop-col">
+    <div class="d-title">Your Game</div>
+    <div class="d-sub">Last 6 rounds · Birch Creek, Logan River, Preston</div>
+    <div class="d-grid-3">
+      <div class="d-card"><div class="d-lbl">Avg Score</div><div class="d-num">82.3</div><div class="d-sub2">↓ 1.4 vs prior 6</div></div>
+      <div class="d-card"><div class="d-lbl">Fairways Hit</div><div class="d-num">47%</div><div class="d-sub2">7 of 14 avg</div></div>
+      <div class="d-card"><div class="d-lbl">Greens in Reg</div><div class="d-num">38%</div><div class="d-sub2">6.8 per round</div></div>
+    </div>
+    <div class="d-grid-2">
+      <div class="d-card"><div class="d-lbl">Scoring Trend</div><div class="d-chart"><canvas id="c-trend"></canvas></div></div>
+      <div class="d-card"><div class="d-lbl">Strokes Lost by Category</div><div class="d-chart"><canvas id="c-cat"></canvas></div></div>
+    </div>
+    <div class="d-card">
+      <div class="d-lbl">Club Performance</div>
+      <div class="d-stat-row"><span class="d-stat-lbl">Driver</span><span>47% FIR · slice pattern</span></div>
+      <div class="d-stat-row"><span class="d-stat-lbl">7-iron</span><span>33% GIR · left miss</span></div>
+      <div class="d-stat-row"><span class="d-stat-lbl">Pitching Wedge</span><span>80% GIR · most reliable</span></div>
+      <div class="d-stat-row"><span class="d-stat-lbl">56° Wedge</span><span>3 of 8 chips left short</span></div>
+      <div class="d-stat-row"><span class="d-stat-lbl">Putter</span><span>32.1 avg · 2 missed &lt;6ft</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP -->
+<div class="screen" id="screen-setup">
+  <div class="mobile-col" style="width:100%;max-width:430px;">
+    <div class="nav">
+      <button class="nav-back" onclick="goTo('screen-home')">← Back</button>
+      <span class="nav-title">New Round</span>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="scroll-content">
+      <div class="section-block">
+        <div class="section-block-title">Course</div>
+        <div class="course-row" onclick="selectCourse('b')">
+          <div><div class="course-name">Birch Creek</div><div class="course-meta">Smithfield, UT · Par 72 · 6,724 yds</div></div>
+          <div class="course-check on" id="chk-b">✓</div>
+        </div>
+        <div class="course-row" onclick="selectCourse('l')">
+          <div><div class="course-name">Logan River</div><div class="course-meta">Logan, UT · Par 71 · 6,502 yds</div></div>
+          <div class="course-check" id="chk-l">✓</div>
+        </div>
+        <div class="course-row" onclick="selectCourse('p')">
+          <div><div class="course-name">Preston G&CC</div><div class="course-meta">Preston, ID · Par 71 · 6,321 yds</div></div>
+          <div class="course-check" id="chk-p">✓</div>
+        </div>
+      </div>
+      <div class="section-block" style="padding-top:32px;">
+        <div class="section-block-title">Tees</div>
+        <div class="seg-control" id="seg-tee">
+          <button class="seg-btn on" onclick="selectSeg(this,'seg-tee')">Black</button>
+          <button class="seg-btn" onclick="selectSeg(this,'seg-tee')">Blue</button>
+          <button class="seg-btn" onclick="selectSeg(this,'seg-tee')">White</button>
+          <button class="seg-btn" onclick="selectSeg(this,'seg-tee')">Red</button>
+        </div>
+      </div>
+      <div class="section-block" style="padding-top:32px;">
+        <div class="section-block-title">Holes</div>
+        <div class="seg-control" id="seg-holes">
+          <button class="seg-btn on" onclick="selectSeg(this,'seg-holes')">18 Holes</button>
+          <button class="seg-btn" onclick="selectSeg(this,'seg-holes')">Front 9</button>
+          <button class="seg-btn" onclick="selectSeg(this,'seg-holes')">Back 9</button>
+        </div>
+      </div>
+      <div style="height:40px;"></div>
+    </div>
+    <div class="bottom-bar">
+      <button class="btn-primary" onclick="goTo('screen-hole')">Start Round</button>
+    </div>
+  </div>
+  <div class="desktop-col">
+    <div class="d-title">Birch Creek</div>
+    <div class="d-sub">Smithfield, UT · Par 72 · Blue Tees</div>
+    <div class="d-grid-3" style="margin-bottom:32px;">
+      <div class="d-card"><div class="d-lbl">Rounds Played</div><div class="d-num">4</div></div>
+      <div class="d-card"><div class="d-lbl">Best Score</div><div class="d-num">78</div></div>
+      <div class="d-card"><div class="d-lbl">Avg Score</div><div class="d-num">81.5</div></div>
+    </div>
+    <div class="d-card">
+      <div class="d-lbl">Scorecard · Blue Tees</div>
+      <div style="overflow-x:auto;">
+        <table class="sc" style="min-width:500px;">
+          <tr><th>Hole</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>OUT</th></tr>
+          <tr><td>Par</td><td class="par">4</td><td class="par">4</td><td class="par">5</td><td class="par">3</td><td class="par">4</td><td class="par">4</td><td class="par">3</td><td class="par">4</td><td class="par">5</td><td class="tot">36</td></tr>
+          <tr><td>Yds</td><td>380</td><td>392</td><td>520</td><td>185</td><td>378</td><td>365</td><td>195</td><td>410</td><td>492</td><td class="tot">3317</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOLE SCORING -->
+<div class="screen" id="screen-hole">
+  <div class="mobile-col" style="width:100%;max-width:430px;">
+    <div class="hole-top">
+      <div class="hole-top-row">
+        <div>
+          <div class="hole-num-lbl">Hole</div>
+          <div class="hole-num-big">3</div>
+        </div>
+        <div class="hole-right">
+          <div class="hole-par-lbl">Par</div>
+          <div class="hole-par-big">5</div>
+          <div class="hole-yds">520 yds</div>
+        </div>
+      </div>
+      <div class="hole-running">Thru 2 · <strong>+2</strong></div>
+    </div>
+
+    <div class="progress-bar">
+      <div class="pip done"></div><div class="pip done"></div><div class="pip now"></div>
+      <div class="pip"></div><div class="pip"></div><div class="pip"></div>
+      <div class="pip"></div><div class="pip"></div><div class="pip"></div>
+      <div class="pip"></div><div class="pip"></div><div class="pip"></div>
+      <div class="pip"></div><div class="pip"></div><div class="pip"></div>
+      <div class="pip"></div><div class="pip"></div><div class="pip"></div>
+    </div>
+
+    <div class="scroll-content">
+      <!-- Score -->
+      <div class="score-section">
+        <div class="section-lbl">Score</div>
+        <div class="score-row">
+          <button class="score-btn" onclick="selectScore(this)"><div class="num">3</div><div class="name">Eagle</div></button>
+          <button class="score-btn" onclick="selectScore(this)"><div class="num">4</div><div class="name">Birdie</div></button>
+          <button class="score-btn center on" onclick="selectScore(this)"><div class="num">5</div><div class="name">Par</div></button>
+          <button class="score-btn" onclick="selectScore(this)"><div class="num">6</div><div class="name">Bogey</div></button>
+          <button class="score-btn" onclick="selectScore(this)"><div class="num">7</div><div class="name">Dbl</div></button>
+        </div>
+      </div>
+
+      <!-- Putts -->
+      <div class="putts-section">
+        <div class="section-lbl" style="margin-bottom:14px;">Putts</div>
+        <div class="putts-row">
+          <button class="putt-btn" onclick="selectPutt(this)"><span class="putt-sm">0</span></button>
+          <button class="putt-btn" onclick="selectPutt(this)">1</button>
+          <button class="putt-btn on" onclick="selectPutt(this)">2</button>
+          <button class="putt-btn" onclick="selectPutt(this)">3</button>
+          <button class="putt-btn" onclick="selectPutt(this)"><span class="putt-sm">4+</span></button>
+        </div>
+      </div>
+
+      <!-- Shot details -->
+      <div class="details-section">
+        <div class="details-header">
+          <div class="details-lbl">Shot Details</div>
+          <div class="details-opt">Optional</div>
+        </div>
+
+        <div class="shot-card">
+          <div class="shot-hd">
+            <div class="shot-title">Shot 1 · Drive</div>
+            <div class="dist-wrap"><input class="dist-input" placeholder="—" type="number"><span class="dist-unit">yds</span></div>
+          </div>
+          <div class="row-lbl">Club</div>
+          <div class="club-scroll">
+            <div class="pill on">D</div><div class="pill">3W</div><div class="pill">5W</div>
+            <div class="pill">3H</div><div class="pill">4H</div><div class="pill">4i</div><div class="pill">5i</div>
+          </div>
+          <div class="row-lbl">Result</div>
+          <div class="miss-row">
+            <div class="miss-pill">Fairway ✓</div>
+            <div class="miss-pill on">Slice</div>
+            <div class="miss-pill">Left</div>
+            <div class="miss-pill">Right</div>
+            <div class="miss-pill">Thin</div>
+            <div class="miss-pill">Chunk</div>
+            <div class="miss-pill">Topped</div>
+          </div>
+        </div>
+
+        <div class="shot-card">
+          <div class="shot-hd">
+            <div class="shot-title">Shot 2 · Approach</div>
+            <div class="dist-wrap"><input class="dist-input" placeholder="—" type="number"><span class="dist-unit">yds</span></div>
+          </div>
+          <div class="row-lbl">Club</div>
+          <div class="club-scroll">
+            <div class="pill">5i</div><div class="pill">6i</div><div class="pill on">7i</div>
+            <div class="pill">8i</div><div class="pill">9i</div><div class="pill">PW</div><div class="pill">GW</div>
+          </div>
+          <div class="row-lbl">Result</div>
+          <div class="miss-row">
+            <div class="miss-pill">GIR ✓</div>
+            <div class="miss-pill">Short</div>
+            <div class="miss-pill">Long</div>
+            <div class="miss-pill on">Left</div>
+            <div class="miss-pill">Right</div>
+            <div class="miss-pill">Thin</div>
+            <div class="miss-pill">Chunk</div>
+          </div>
+        </div>
+
+        <div class="shot-card">
+          <div class="shot-hd">
+            <div class="shot-title">Shot 3 · Chip</div>
+            <div class="dist-wrap"><input class="dist-input" placeholder="—" type="number"><span class="dist-unit">yds</span></div>
+          </div>
+          <div class="row-lbl">Club</div>
+          <div class="club-scroll">
+            <div class="pill">60°</div><div class="pill on">56°</div>
+            <div class="pill">52°</div><div class="pill">PW</div><div class="pill">9i</div><div class="pill">7i</div>
+          </div>
+          <div class="row-lbl">Result</div>
+          <div class="miss-row">
+            <div class="miss-pill">On ✓</div>
+            <div class="miss-pill on">Short</div>
+            <div class="miss-pill">Long</div>
+            <div class="miss-pill">Blade</div>
+            <div class="miss-pill">Chunk</div>
+            <div class="miss-pill">Left</div>
+            <div class="miss-pill">Right</div>
+          </div>
+        </div>
+
+        <div class="putt-card">
+          <div class="putt-card-title">Putting · 2 putts</div>
+          <div class="row-lbl">1st Putt Distance</div>
+          <div class="putt-dist-row">
+            <button class="putt-dist-btn">&lt;5ft</button>
+            <button class="putt-dist-btn">5–10</button>
+            <button class="putt-dist-btn on">10–20</button>
+            <button class="putt-dist-btn">20–40</button>
+            <button class="putt-dist-btn">40+</button>
+          </div>
+          <div class="row-lbl">Miss Direction</div>
+          <div class="miss-row">
+            <div class="miss-pill">Made ✓</div>
+            <div class="miss-pill on">Left</div>
+            <div class="miss-pill">Right</div>
+            <div class="miss-pill">Short</div>
+            <div class="miss-pill">Long</div>
+          </div>
+        </div>
+
+        <div style="height:8px;"></div>
+      </div>
+    </div>
+
+    <div class="bottom-bar">
+      <button class="btn-primary" onclick="goTo('screen-analysis')">Next Hole →</button>
+      <button class="btn-ghost" onclick="goTo('screen-analysis')">Finish Round</button>
+    </div>
+  </div>
+
+  <div class="desktop-col">
+    <div class="d-title">Hole 3</div>
+    <div class="d-sub">Birch Creek · Blue Tees · Apr 4, 2026</div>
+    <div class="d-grid-3" style="margin-bottom:32px;">
+      <div class="d-card"><div class="d-lbl">Score</div><div class="d-num">+2</div><div class="d-sub2">Thru 2 holes</div></div>
+      <div class="d-card"><div class="d-lbl">Fairways</div><div class="d-num">1/1</div></div>
+      <div class="d-card"><div class="d-lbl">Putts</div><div class="d-num">4</div><div class="d-sub2">2.0 per hole</div></div>
+    </div>
+    <div class="d-card">
+      <div class="d-lbl">Live Scorecard</div>
+      <table class="sc" style="width:100%;">
+        <tr><th>Hole</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th></tr>
+        <tr><td>Par</td><td class="par">4</td><td class="par">4</td><td class="par">5</td><td class="par">3</td><td class="par">4</td><td class="par">4</td><td class="par">3</td><td class="par">4</td><td class="par">5</td></tr>
+        <tr><td>Score</td><td class="birdie">3</td><td class="bogey">5</td><td style="color:var(--text3)">·</td><td style="color:var(--text3)">·</td><td style="color:var(--text3)">·</td><td style="color:var(--text3)">·</td><td style="color:var(--text3)">·</td><td style="color:var(--text3)">·</td><td style="color:var(--text3)">·</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYSIS -->
+<div class="screen" id="screen-analysis">
+  <div class="mobile-col" style="width:100%;max-width:430px;">
+    <div class="nav">
+      <button class="nav-back" onclick="goTo('screen-home')">← Back</button>
+      <span class="nav-title">Round Analysis</span>
+      <button class="nav-action">Share</button>
+    </div>
+    <div class="analysis-hero">
+      <div class="analysis-eyebrow">Birch Creek · Apr 2, 2026 · Blue Tees</div>
+      <div class="analysis-score-row">
+        <div class="analysis-score">81</div>
+        <div class="analysis-to-par">+9</div>
+      </div>
+    </div>
+    <div class="analysis-strip">
+      <div class="astat"><div class="astat-num">32</div><div class="astat-lbl">Putts</div></div>
+      <div class="astat"><div class="astat-num">6/13</div><div class="astat-lbl">Fairways</div></div>
+      <div class="astat"><div class="astat-num">6</div><div class="astat-lbl">GIR</div></div>
+    </div>
+    <div class="scroll-content">
+      <div class="ai-section">
+        <div class="ai-eyebrow">AI Analysis</div>
+        <div class="ai-card">
+          <div class="ai-text">You lost <strong>4 strokes on approach shots inside 150 yards</strong>, all with your 7-iron. This matches your last 3 rounds. Driver was better than average — only 2 slices, 6 of 13 fairways. Short game cost you the most: <strong>3 chips left short</strong> on holes 6, 11, and 14. You also missed <strong>2 putts inside 6 feet</strong>.</div>
+        </div>
+      </div>
+      <div class="insight-section">
+        <div class="insight-section-title">Went Well</div>
+        <div class="insight-row">
+          <div class="insight-icon">✓</div>
+          <div><div class="insight-title">Driver consistency</div><div class="insight-desc">Only 2 slices vs your 4-round avg of 4.2. Pars on 11, 12, and 15 came directly from fairways hit.</div></div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-icon">✓</div>
+          <div><div class="insight-title">Pitching wedge</div><div class="insight-desc">4 for 4 on GIR with PW. Your most reliable club continues to perform.</div></div>
+        </div>
+      </div>
+      <div class="insight-section">
+        <div class="insight-section-title">Focus Areas</div>
+        <div class="insight-row">
+          <div class="insight-icon">↓</div>
+          <div><div class="insight-title">7-iron approach shots</div><div class="insight-desc">2 for 6 GIR with 7-iron. Both misses were left. Consistent pattern across recent rounds.</div></div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-icon">↓</div>
+          <div><div class="insight-title">Short chips under 30 yards</div><div class="insight-desc">3 chips left short today. You're under-clubbing consistently in scoring situations.</div></div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-icon">↓</div>
+          <div><div class="insight-title">Putts inside 6 feet</div><div class="insight-desc">Missed 2 of 4. Those are 2 strokes directly recoverable with practice.</div></div>
+        </div>
+      </div>
+      <div class="sc-section">
+        <div class="sc-title">Scorecard</div>
+        <div class="sc-wrap">
+          <table class="sc" style="min-width:340px;width:100%;">
+            <tr><th>Hole</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th></tr>
+            <tr><td>Par</td><td class="par">4</td><td class="par">4</td><td class="par">5</td><td class="par">3</td><td class="par">4</td><td class="par">4</td><td class="par">3</td><td class="par">4</td><td class="par">5</td></tr>
+            <tr><td>Score</td><td class="birdie">3</td><td class="bogey">5</td><td class="par">5</td><td class="bogey">4</td><td class="par">4</td><td class="bogey">5</td><td class="bogey">4</td><td class="par">4</td><td class="dbl">7</td></tr>
+            <tr><td>Putts</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>3</td><td>1</td><td>2</td><td>3</td></tr>
+          </table>
+        </div>
+      </div>
+      <div style="height:40px;"></div>
+    </div>
+    <div class="bottom-bar">
+      <button class="btn-primary" onclick="goTo('screen-home')">Done</button>
+    </div>
+  </div>
+
+  <div class="desktop-col">
+    <div class="d-title">Birch Creek · Apr 2</div>
+    <div class="d-sub">Blue Tees · 18 holes · Score 81 (+9)</div>
+    <div class="d-grid-2">
+      <div class="d-card"><div class="d-lbl">Strokes by Category</div><div class="d-chart"><canvas id="c-donut"></canvas></div></div>
+      <div class="d-card"><div class="d-lbl">Putts by Distance</div><div class="d-chart"><canvas id="c-putts"></canvas></div></div>
+    </div>
+    <div class="d-card" style="margin-bottom:16px;">
+      <div class="d-lbl">Full Scorecard</div>
+      <div style="overflow-x:auto;">
+        <table class="sc" style="min-width:700px;width:100%;">
+          <tr><th>Hole</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>OUT</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>IN</th><th>TOT</th></tr>
+          <tr><td>Par</td><td class="par">4</td><td class="par">4</td><td class="par">5</td><td class="par">3</td><td class="par">4</td><td class="par">4</td><td class="par">3</td><td class="par">4</td><td class="par">5</td><td class="tot">36</td><td class="par">4</td><td class="par">4</td><td class="par">4</td><td class="par">4</td><td class="par">3</td><td class="par">4</td><td class="par">5</td><td class="par">3</td><td class="par">5</td><td class="tot">36</td><td class="tot">72</td></tr>
+          <tr><td>Score</td><td class="birdie">3</td><td class="bogey">5</td><td class="par">5</td><td class="bogey">4</td><td class="par">4</td><td class="bogey">5</td><td class="bogey">4</td><td class="par">4</td><td class="dbl">7</td><td class="tot">41</td><td class="par">4</td><td class="bogey">5</td><td class="bogey">5</td><td class="par">4</td><td class="bogey">4</td><td class="par">4</td><td class="par">5</td><td class="bogey">4</td><td class="par">5</td><td class="tot">40</td><td class="tot">81</td></tr>
+          <tr><td>Putts</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>3</td><td>1</td><td>2</td><td>3</td><td class="tot">18</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td class="tot">16</td><td class="tot">32</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="d-card">
+      <div class="d-lbl">Club Performance</div>
+      <div class="d-stat-row"><span class="d-stat-lbl">Driver</span><span>6/13 FIR · 2 slices</span></div>
+      <div class="d-stat-row"><span class="d-stat-lbl">7-iron</span><span>2/6 GIR · both missed left</span></div>
+      <div class="d-stat-row"><span class="d-stat-lbl">PW</span><span>4/4 GIR</span></div>
+      <div class="d-stat-row"><span class="d-stat-lbl">56° wedge</span><span>4 chips · 3 left short</span></div>
+      <div class="d-stat-row"><span class="d-stat-lbl">Putter</span><span>32 putts · 2 missed &lt;6ft</span></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function selectCourse(id) {
+  ['b','l','p'].forEach(c => document.getElementById('chk-'+c).classList.remove('on'));
+  document.getElementById('chk-'+id).classList.add('on');
+}
+function selectSeg(btn, groupId) {
+  document.getElementById(groupId).querySelectorAll('.seg-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+function selectScore(btn) {
+  btn.closest('.score-row').querySelectorAll('.score-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+function selectPutt(btn) {
+  btn.closest('.putts-row').querySelectorAll('.putt-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+document.querySelectorAll('.club-scroll').forEach(scroll => {
+  scroll.querySelectorAll('.pill').forEach(p => {
+    p.addEventListener('click', function() {
+      scroll.querySelectorAll('.pill').forEach(x => x.classList.remove('on'));
+      this.classList.add('on');
+    });
+  });
+});
+document.querySelectorAll('.miss-pill').forEach(p => {
+  p.addEventListener('click', function() { this.classList.toggle('on'); });
+});
+document.querySelectorAll('.putt-dist-btn').forEach(b => {
+  b.addEventListener('click', function() {
+    this.closest('.putt-dist-row').querySelectorAll('.putt-dist-btn').forEach(x => x.classList.remove('on'));
+    this.classList.add('on');
+  });
+});
+
+window.addEventListener('load', () => {
+  const sc = { color: '#555', font: { family: 'DM Sans', size: 10 } };
+  const grid = { color: 'rgba(255,255,255,0.06)' };
+
+  const t1 = document.getElementById('c-trend');
+  if (t1) new Chart(t1, {
+    type: 'line',
+    data: { labels: ['Mar 1','Mar 8','Mar 15','Mar 21','Mar 28','Apr 2'], datasets: [{ data: [86,84,83,78,84,81], borderColor: '#fff', backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 2, pointBackgroundColor: '#fff', pointRadius: 4, tension: 0.4, fill: true }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid, ticks: sc }, y: { grid, ticks: sc, min: 70, max: 95 } } }
+  });
+
+  const t2 = document.getElementById('c-cat');
+  if (t2) new Chart(t2, {
+    type: 'bar',
+    data: { labels: ['Drive','Approach','Short','Putting'], datasets: [{ data: [1.2,4.1,2.4,1.3], backgroundColor: 'rgba(255,255,255,0.75)', borderRadius: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: sc }, y: { grid, ticks: sc } } }
+  });
+
+  const t3 = document.getElementById('c-donut');
+  if (t3) new Chart(t3, {
+    type: 'doughnut',
+    data: { labels: ['Driving','Approach','Short Game','Putting'], datasets: [{ data: [1,4,3,1], backgroundColor: ['rgba(255,255,255,0.9)','rgba(255,255,255,0.55)','rgba(255,255,255,0.3)','rgba(255,255,255,0.15)'], borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#777', font: { size: 11, family: 'DM Sans' }, padding: 12, boxWidth: 10 } } }, cutout: '65%' }
+  });
+
+  const t4 = document.getElementById('c-putts');
+  if (t4) new Chart(t4, {
+    type: 'bar',
+    data: { labels: ['<5ft','5–10','10–20','20–40','40+'], datasets: [{ label: 'Made', data: [2,3,2,1,0], backgroundColor: 'rgba(255,255,255,0.75)', borderRadius: 4 }, { label: 'Missed', data: [2,1,0,0,0], backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#777', font: { size: 11, family: 'DM Sans' }, boxWidth: 10 } } }, scales: { x: { stacked: true, grid: { display: false }, ticks: sc }, y: { stacked: true, grid, ticks: { ...sc, stepSize: 1 } } } }
+  });
+});
+</script>
+</body>
+</html>
