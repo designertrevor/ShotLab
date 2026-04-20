@@ -74,11 +74,12 @@ const C = {
 
 export default function HoleScoring({ round, course, onNext, onFinish }) {
   const completedCount = round.holes.length
-  const holeNum = completedCount + 1
-  const totalHoles = 18
+  const totalHoles = round.totalHoles ?? 18
+  const startHole = round.startHole ?? 1
+  const holeNum = startHole + completedCount
   const hole = course.holes[holeNum - 1]
   const teeYards = hole.yardage[round.tees]
-  const isLastHole = holeNum >= totalHoles
+  const isLastHole = completedCount + 1 >= totalHoles
 
   const runningScore = round.holes.reduce(
     (acc, hs) => acc + hs.score - course.holes[hs.hole - 1].par,
@@ -197,7 +198,7 @@ export default function HoleScoring({ round, course, onNext, onFinish }) {
         </div>
       </div>
 
-      {/* Progress dots */}
+      {/* Progress dots — one per hole in this round */}
       <div style={{ display: 'flex', gap: 4, padding: '0 24px 20px', flexShrink: 0 }}>
         {Array.from({ length: totalHoles }).map((_, i) => (
           <div key={i} style={{

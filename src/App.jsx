@@ -1,44 +1,89 @@
 import { useState } from 'react'
+import Home from './screens/Home'
+import Setup from './screens/Setup'
 import HoleScoring from './screens/HoleScoring'
-import { getCourseById, getActiveRound, saveActiveRound, saveRound, clearActiveRound, clearActiveHole } from './lib/storage'
-
-function createRound(courseId = 'logan-river', tees = 'blue') {
-  return {
-    id: crypto.randomUUID(),
-    courseId,
-    tees,
-    date: new Date().toISOString().split('T')[0],
-    holes: [],
-  }
-}
+import Analysis from './screens/Analysis'
+import {
+  getCourseById, getActiveRound,
+  saveRound, clearActiveRound, clearActiveHole, getRoundById,
+} from './lib/storage'
 
 export default function App() {
-  const [round, setRound] = useState(() => getActiveRound() ?? createRound())
+  const [screen, setScreen] = useState(() => getActiveRound() ? 'scoring' : 'home')
+  const [activeRound, setActiveRound] = useState(() => getActiveRound())
+  const [viewingRoundId, setViewingRoundId] = useState(null)
 
-  const course = getCourseById(round.courseId)
+  // ── Navigation helpers ──────────────────────────────────────────────────────
 
-  function handleNext(updatedRound) {
-    saveActiveRound(updatedRound)
-    setRound(updatedRound)
+  function goHome() {
+    setScreen('home')
+    setViewingRoundId(null)
   }
 
-  function handleFinish(completedRound) {
+  // ── Screen: Home ────────────────────────────────────────────────────────────
+
+  function handleNewRound() {
+    setScreen('setup')
+  }
+
+  function handleViewRound(roundId) {
+    setViewingRoundId(roundId)
+    setScreen('analysis')
+  }
+
+  // ── Screen: Setup ───────────────────────────────────────────────────────────
+
+  function handleRoundStart(round) {
+    setActiveRound(round)
+    setScreen('scoring')
+  }
+
+  // ── Screen: Hole Scoring ────────────────────────────────────────────────────
+
+  function handleHoleNext(updatedRound) {
+    setActiveRound(updatedRound)
+  }
+
+  function handleRoundFinish(completedRound) {
     saveRound(completedRound)
     clearActiveRound()
     clearActiveHole()
-    // TODO: navigate to Round Analysis screen
-    setRound(createRound())
+    setActiveRound(null)
+    setViewingRoundId(completedRound.id)
+    setScreen('analysis')
   }
 
-  if (!course) return <div style={{ color: '#fff', padding: 24 }}>Course not found.</div>
+  // ── Render ──────────────────────────────────────────────────────────────────
 
-  return (
-    <HoleScoring
-      key={round.holes.length}
-      round={round}
-      course={course}
-      onNext={handleNext}
-      onFinish={handleFinish}
-    />
-  )
+  if (screen === 'home') {
+    return <Home onNewRound={handleNewRound} onViewRound={handleViewRound} />
+  }
+
+  if (screen === 'setup') {
+    return <Setup onStart={handleRoundStart} onBack={goHome} />
+  }
+
+  if (screen === 'scoring') {
+    const round = activeRound
+    const course = round ? getCourseById(round.courseId) : null
+    if (!round || !course) return <Setup onStart={handleRoundStart} onBack={goHome} />
+    return (
+      <HoleScoring
+        key={round.holes.length}
+        round={round}
+        course={course}
+        onNext={handleHoleNext}
+        onFinish={handleRoundFinish}
+      />
+    )
+  }
+
+  if (screen === 'analysis') {
+    const round = viewingRoundId ? getRoundById(viewingRoundId) : null
+    const course = round ? getCourseById(round.courseId) : null
+    if (!round || !course) return <Home onNewRound={handleNewRound} onViewRound={handleViewRound} />
+    return <Analysis round={round} course={course} onDone={goHome} />
+  }
+
+  return null
 }

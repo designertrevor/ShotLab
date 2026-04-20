@@ -61,5 +61,7 @@ export interface Round {
   tees: Tee
   date: string
   holes: HoleScore[]
+  totalHoles: 9 | 18
+  startHole: 1 | 10
   analysis?: RoundAnalysis
 }
