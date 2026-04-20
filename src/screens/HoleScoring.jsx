@@ -89,13 +89,14 @@ export default function HoleScoring({ round, course, onNext, onFinish }) {
   if (hole.par === 5) scoreOptions.push(hole.par + 3)
   const validScores = scoreOptions.filter(s => s >= 1)
 
-  const [score, setScore] = useState(hole.par)
+  const [score, setScore] = useState(null)
   const [putts, setPutts] = useState(null)
   const [shotDetails, setShotDetails] = useState([])
   const [puttDetail, setPuttDetail] = useState({ distance: null, misses: [] })
 
-  const numShots = putts !== null ? Math.max(0, score - putts) : 0
-  const showDetails = putts !== null
+  // Show shots once score is selected; assume 2 putts until putts is chosen
+  const numShots = score !== null ? Math.max(0, score - (putts ?? 2)) : 0
+  const showDetails = score !== null
 
   // Resize shot detail array when score or putts changes
   useEffect(() => {
@@ -110,7 +111,7 @@ export default function HoleScoring({ round, course, onNext, onFinish }) {
 
   // Persist draft after each interaction
   useEffect(() => {
-    if (putts === null) return
+    if (score === null) return
     saveActiveHole({ roundId: round.id, holeNum, score, putts, shotDetails, puttDetail })
   }, [score, putts, shotDetails, puttDetail])
 
@@ -242,54 +243,57 @@ export default function HoleScoring({ round, course, onNext, onFinish }) {
           </div>
         </div>
 
-        {/* Putts */}
-        <div style={{ padding: '28px 24px 0' }}>
-          <SectionLabel text="Putts" />
-          <div style={{ display: 'flex', gap: 10 }}>
-            {[0, 1, 2, 3, 4].map(p => {
-              const isOn = putts === p
-              return (
-                <button key={p} onClick={() => setPutts(p)} style={{
-                  flex: 1, height: 72,
-                  border: `1px solid ${isOn ? '#fff' : C.border}`,
-                  borderRadius: 12,
-                  background: isOn ? '#fff' : C.surface,
-                  color: isOn ? '#000' : C.text2,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.12s',
-                  fontFamily: p === 4 ? C.sans : C.bebas,
-                  fontSize: p === 4 ? 13 : 40,
-                  fontWeight: p === 4 ? 700 : undefined,
-                  letterSpacing: p === 4 ? 0.5 : undefined,
-                  textTransform: p === 4 ? 'uppercase' : undefined,
-                }}>
-                  {p === 4 ? '4+' : p}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Shot details — only visible after putts selected */}
+        {/* Shot details + putts — visible once score is selected */}
         {showDetails && (
           <div style={{ padding: '28px 24px 0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <SectionLabel text="Shot Details" style={{ marginBottom: 0 }} />
-              <span style={{ fontSize: 13, color: C.text3 }}>Optional</span>
-            </div>
+            {shotDetails.length > 0 && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <SectionLabel text="Shot Details" />
+                  <span style={{ fontSize: 13, color: C.text3 }}>Optional</span>
+                </div>
+                {shotDetails.map((shot, i) => (
+                  <ShotCard
+                    key={i}
+                    index={i}
+                    label={getShotLabel(i, hole.par)}
+                    config={SHOT_TYPES[getShotCategory(i, hole.par)]}
+                    shot={shot}
+                    onClubSelect={club => updateShot(i, 'club', shot.club === club ? null : club)}
+                    onMissToggle={miss => toggleMiss(i, miss)}
+                    onYardageChange={val => updateShot(i, 'yardage', val)}
+                  />
+                ))}
+              </>
+            )}
 
-            {shotDetails.map((shot, i) => (
-              <ShotCard
-                key={i}
-                index={i}
-                label={getShotLabel(i, hole.par)}
-                config={SHOT_TYPES[getShotCategory(i, hole.par)]}
-                shot={shot}
-                onClubSelect={club => updateShot(i, 'club', shot.club === club ? null : club)}
-                onMissToggle={miss => toggleMiss(i, miss)}
-                onYardageChange={val => updateShot(i, 'yardage', val)}
-              />
-            ))}
+            {/* Putts — always at the bottom */}
+            <div style={{ marginBottom: 12 }}>
+              <SectionLabel text="Putts" />
+              <div style={{ display: 'flex', gap: 10 }}>
+                {[0, 1, 2, 3, 4].map(p => {
+                  const isOn = putts === p
+                  return (
+                    <button key={p} onClick={() => setPutts(p)} style={{
+                      flex: 1, height: 72,
+                      border: `1px solid ${isOn ? '#fff' : C.border}`,
+                      borderRadius: 12,
+                      background: isOn ? '#fff' : C.surface,
+                      color: isOn ? '#000' : C.text2,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.12s',
+                      fontFamily: p === 4 ? C.sans : C.bebas,
+                      fontSize: p === 4 ? 13 : 40,
+                      fontWeight: p === 4 ? 700 : undefined,
+                      letterSpacing: p === 4 ? 0.5 : undefined,
+                      textTransform: p === 4 ? 'uppercase' : undefined,
+                    }}>
+                      {p === 4 ? '4+' : p}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
             {putts > 0 && (
               <PuttCard
